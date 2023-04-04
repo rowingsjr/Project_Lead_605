@@ -34,7 +34,6 @@ public class Maze extends JPanel implements Runnable
     // if it is part of the current path through the maze, by
     // visitedCode if it has already been explored without finding
     // a solution, and by emptyCode if it has not yet been explored.
-    ArrayList<Integer> intHolder = new ArrayList<>();
 
     final static int backgroundCode = 0;
     final static int wallCode = 1;
@@ -194,7 +193,6 @@ public class Maze extends JPanel implements Runnable
         for (i = wallCt - 1; i > 0; i--)
         {
             r = (int) (Math.random() * i); // choose a wall randomly and maybe tear it down
-            storeRandomNum(r);
             tearDown(wallrow[r], wallcol[r]);
             wallrow[r] = wallrow[i];
             wallcol[r] = wallcol[i];
@@ -203,11 +201,6 @@ public class Maze extends JPanel implements Runnable
             for (j = 1; j < columns - 1; j++)
                 if (maze[i][j] < 0)
                     maze[i][j] = emptyCode;
-    }
-
-    private void storeRandomNum(int r)
-    {
-        intHolder.add(r);
     }
 
     synchronized void tearDown(int row, int col)
