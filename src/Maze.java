@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.util.ArrayList;
 import javax.swing.*;
 
 /**
@@ -11,7 +12,8 @@ public class Maze extends JPanel implements Runnable
 {
 
     // a main routine makes it possible to run this class as a program
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         JFrame window = new JFrame("Maze Solver");
         window.setContentPane(new Maze());
         window.pack();
@@ -32,6 +34,8 @@ public class Maze extends JPanel implements Runnable
     // if it is part of the current path through the maze, by
     // visitedCode if it has already been explored without finding
     // a solution, and by emptyCode if it has not yet been explored.
+    int[][] mazeCopy;
+    ArrayList<Integer> intHolder = new ArrayList<>();
 
     final static int backgroundCode = 0;
     final static int wallCode = 1;
@@ -63,7 +67,8 @@ public class Maze extends JPanel implements Runnable
     // redrawMaze(); set to true in createMaze(), and
     // reset to false in run()
 
-    public Maze() {
+    public Maze()
+    {
         color = new Color[] {
                 new Color(0, 0, 0),
                 new Color(0, 0, 0),
@@ -100,11 +105,13 @@ public class Maze extends JPanel implements Runnable
 
     void redrawMaze(Graphics g) {
         // draws the entire maze
-        if (mazeExists) {
+        if (mazeExists)
+        {
             int w = totalWidth / columns; // width of each cell
             int h = totalHeight / rows; // height of each cell
             for (int j = 0; j < columns; j++)
-                for (int i = 0; i < rows; i++) {
+                for (int i = 0; i < rows; i++)
+                {
                     if (maze[i][j] < 0)
                         g.setColor(color[emptyCode]);
                     else
@@ -115,7 +122,8 @@ public class Maze extends JPanel implements Runnable
     }
 
 
-    public void run() {
+    public void run()
+    {
         // run method for thread repeatedly makes a maze and then solves it
         try {
             Thread.sleep(1000);
@@ -124,14 +132,22 @@ public class Maze extends JPanel implements Runnable
         }
         while (true) {
             makeMaze();
+            //makeMazeCopy();
             long start = System.currentTimeMillis();
             solveMaze(1, 1);
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            makeMaze2();
             synchronized (this) {
                 try {
                     wait(sleepTime);
                 } catch (InterruptedException e) {
                 }
             }
+
             long end = System.currentTimeMillis();
             seconds = (end - start)/1000;
             mazeExists = false;
@@ -146,7 +162,8 @@ public class Maze extends JPanel implements Runnable
     }
 
 
-    void makeMaze() {
+    void makeMaze()
+    {
         // Create a random maze. The strategy is to start with
         // a grid of disconnected "rooms" separated by walls.
         // then look at each of the separating walls, in a random
@@ -180,8 +197,10 @@ public class Maze extends JPanel implements Runnable
         mazeExists = true;
         repaint();
         int r;
-        for (i = wallCt - 1; i > 0; i--) {
+        for (i = wallCt - 1; i > 0; i--)
+        {
             r = (int) (Math.random() * i); // choose a wall randomly and maybe tear it down
+            storeRandomNum(r);
             tearDown(wallrow[r], wallcol[r]);
             wallrow[r] = wallrow[i];
             wallcol[r] = wallcol[i];
@@ -192,8 +211,65 @@ public class Maze extends JPanel implements Runnable
                     maze[i][j] = emptyCode;
     }
 
+    private void storeRandomNum(int r)
+    {
+        intHolder.add(r);
+    }
 
-    synchronized void tearDown(int row, int col) {
+    void makeMaze2()
+    {
+        // Create a random maze. The strategy is to start with
+        // a grid of disconnected "rooms" separated by walls.
+        // then look at each of the separating walls, in a random
+        // order. If tearing down a wall would not create a loop
+        // in the maze, then tear it down. Otherwise, leave it in place.
+        if (maze != null)
+            maze = new int[rows][columns];
+        int i, j;
+        int emptyCt = 0; // number of rooms
+        int wallCt = 0; // number of walls
+        int[] wallrow = new int[(rows * columns) / 2]; // position of walls between rooms
+        int[] wallcol = new int[(rows * columns) / 2];
+        for (i = 0; i < rows; i++) // start with everything being a wall
+            for (j = 0; j < columns; j++)
+                maze[i][j] = wallCode;
+        for (i = 1; i < rows - 1; i += 2) // make a grid of empty rooms
+            for (j = 1; j < columns - 1; j += 2) {
+                emptyCt++;
+                maze[i][j] = -emptyCt; // each room is represented by a different negative number
+                if (i < rows - 2) { // record info about wall below this room
+                    wallrow[wallCt] = i + 1;
+                    wallcol[wallCt] = j;
+                    wallCt++;
+                }
+                if (j < columns - 2) { // record info about wall to right of this room
+                    wallrow[wallCt] = i;
+                    wallcol[wallCt] = j + 1;
+                    wallCt++;
+                }
+            }
+        mazeExists = true;
+        repaint();
+        int r;
+        int k = 0;
+        //for (int k = 0; k < intHolder.size(); k++)
+        for (i = wallCt - 1; i > 0; i--)
+        {
+            r = intHolder.get(k); // choose a wall randomly and maybe tear it down
+            tearDown(wallrow[r], wallcol[r]);
+            wallrow[r] = wallrow[i];
+            wallcol[r] = wallcol[i];
+            k++;
+
+        }
+        for (i = 1; i < rows - 1; i++) // replace negative values in maze[][] with emptyCode
+            for (j = 1; j < columns - 1; j++)
+                if (maze[i][j] < 0)
+                    maze[i][j] = emptyCode;
+    }
+
+    synchronized void tearDown(int row, int col)
+    {
         // Tear down a wall, unless doing so will form a loop. Tearing down a wall
         // joins two "rooms" into one "room". (Rooms begin to look like corridors
         // as they grow.) When a wall is torn down, the room codes on one side are
@@ -237,11 +313,11 @@ public class Maze extends JPanel implements Runnable
 
     boolean solveMaze(int row, int col)
     {
-
         // Try to solve the maze by continuing current path from position
         // (row,col). Return true if a solution is found. The maze is
         // considered to be solved if the path reaches the lower right cell.
-        if (maze[row][col] == emptyCode) {
+        if (maze[row][col] == emptyCode)
+        {
             maze[row][col] = pathCode; // add this cell to the path
             repaint();
             if (row == rows - 2 && col == columns - 2)
@@ -258,6 +334,7 @@ public class Maze extends JPanel implements Runnable
             // maze can't be solved from this cell, so backtrack out of the cell
             maze[row][col] = visitedCode; // mark cell as having been visited
             pathChecks++;
+            System.out.println(pathChecks +" Path visited @ [" + row +", " + col +"]");
             repaint();
             synchronized (this) {
                 try {
