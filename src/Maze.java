@@ -42,7 +42,9 @@ public class Maze extends JPanel implements Runnable
     final static int pathCode = 2;
     final static int emptyCode = 3;
     final static int visitedCode = 4;
-
+    final static int shortPath = 5;
+    final static int startPoint = 6;
+    final static int endPoint = 7;
     static float seconds = 0;
 
     Color[] color; // colors associated with the preceding 5 constants;
@@ -74,7 +76,10 @@ public class Maze extends JPanel implements Runnable
                 new Color(0, 0, 0),
                 new Color(255, 215, 0),
                 Color.WHITE,
-                new Color(200, 200, 200)
+                new Color(200, 200, 200),
+                new Color(255,25,0),
+                new Color(0,0,255),
+                new Color(50,205,50)
         };
         setBackground(color[backgroundCode]);
         setPreferredSize(new Dimension(blockSize * columns, blockSize * rows));
@@ -140,25 +145,30 @@ public class Maze extends JPanel implements Runnable
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            makeMaze2();
-            synchronized (this) {
-                try {
-                    wait(sleepTime);
-                } catch (InterruptedException e) {
-                }
-            }
-
             long end = System.currentTimeMillis();
             seconds = (end - start)/1000;
             mazeExists = false;
             System.out.println("It took ~ " + seconds + " seconds to get through the entire maze!");
             System.out.println("Tolerance of +/- 2 - 3 seconds");
-            System.out.println("The shortest distance in the Maze is represented by the GOLD Color.");
+            System.out.println("The shortest distance in the Maze is represented by the RED Color.");
             System.out.println("The algorithm checked " + pathChecks + " amounts of nodes before finding the " +
                     "optimal path.");
             break;
 
         }
+    }
+
+    private boolean mazeSolved(int row, int col)
+    {
+        if (solveMaze(row - 1, col) || // try to solve maze by extending path
+                solveMaze(row, col - 1) || // in each possible direction
+                solveMaze(row + 1, col) ||
+                solveMaze(row, col + 1))
+        {
+            maze[row][col] = shortPath;
+            return true;
+        }
+        return false;
     }
 
 
@@ -262,10 +272,14 @@ public class Maze extends JPanel implements Runnable
             k++;
 
         }
-        for (i = 1; i < rows - 1; i++) // replace negative values in maze[][] with emptyCode
-            for (j = 1; j < columns - 1; j++)
-                if (maze[i][j] < 0)
+        for (i = 1; i < rows - 1; i++) { // replace negative values in maze[][] with emptyCode
+            for (j = 1; j < columns - 1; j++) {
+                if (maze[i][j] < 0) {
                     maze[i][j] = emptyCode;
+                }
+            }
+        }
+
     }
 
     synchronized void tearDown(int row, int col)
@@ -318,10 +332,14 @@ public class Maze extends JPanel implements Runnable
         // considered to be solved if the path reaches the lower right cell.
         if (maze[row][col] == emptyCode)
         {
+            maze[row][col] = startPoint;
             maze[row][col] = pathCode; // add this cell to the path
             repaint();
             if (row == rows - 2 && col == columns - 2)
+            {
+                maze[row][col] = endPoint;
                 return true; // path has reached goal
+            }
             try {
                 Thread.sleep(speedSleep);
             } catch (InterruptedException e) {
@@ -330,7 +348,12 @@ public class Maze extends JPanel implements Runnable
                     solveMaze(row, col - 1) || // in each possible direction
                     solveMaze(row + 1, col) ||
                     solveMaze(row, col + 1))
+            {
+
+                maze[row][col] = shortPath;
+                maze[1][1] = startPoint;
                 return true;
+            }
             // maze can't be solved from this cell, so backtrack out of the cell
             maze[row][col] = visitedCode; // mark cell as having been visited
             pathChecks++;
