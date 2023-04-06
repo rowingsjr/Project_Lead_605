@@ -1,5 +1,4 @@
 import java.awt.*;
-import java.util.ArrayList;
 import javax.swing.*;
 
 /**
@@ -277,7 +276,7 @@ public class Maze extends JPanel implements Runnable
             // maze can't be solved from this cell, so backtrack out of the cell
             maze[row][col] = visitedCode; // mark cell as having been visited
             pathChecks++;
-            System.out.println(pathChecks +" Path visited @ [" + row +", " + col +"]");
+            System.out.println(pathChecks +" Paths visited @ [" + row +", " + col +"]");
             repaint();
             synchronized (this) {
                 try {
