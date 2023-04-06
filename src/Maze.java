@@ -129,6 +129,7 @@ public class Maze extends JPanel implements Runnable {
         while (true) {
             makeMaze();
             //makeMazeCopy();
+            //Start the Timer for amount of time it takes to complete the maze.
             long start = System.currentTimeMillis();
             solveMaze(1, 1);
             try {
@@ -139,6 +140,7 @@ public class Maze extends JPanel implements Runnable {
             long end = System.currentTimeMillis();
             seconds = (end - start) / 1000;
             mazeExists = false;
+            //Display the Results
             System.out.println("It took ~ " + seconds + " seconds to get through the entire maze!");
             System.out.println("Tolerance of +/- 2 - 3 seconds");
             System.out.println("The shortest distance in the Maze is represented by the RED Color.");
@@ -245,6 +247,7 @@ public class Maze extends JPanel implements Runnable {
             maze[row][col] = pathCode; // add this cell to the path
             repaint();
             if (row == rows - 2 && col == columns - 2) {
+                //Add an endpoint color
                 maze[row][col] = endPoint;
                 return true; // path has reached goal
             }
@@ -256,7 +259,7 @@ public class Maze extends JPanel implements Runnable {
                     solveMaze(row, col - 1) || // in each possible direction
                     solveMaze(row + 1, col) ||
                     solveMaze(row, col + 1)) {
-
+                //create the short path and start point colors
                 maze[row][col] = shortPath;
                 maze[1][1] = startPoint;
                 return true;
@@ -272,11 +275,8 @@ public class Maze extends JPanel implements Runnable {
                 } catch (InterruptedException e) {
                 }
             }
-
-
         }
         return false;
-
     }
 
 }
