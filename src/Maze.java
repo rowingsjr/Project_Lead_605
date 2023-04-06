@@ -2,6 +2,9 @@ import java.awt.*;
 import javax.swing.*;
 
 /**
+ * Richard Owings Jr
+ * CSIS 605
+ * Dr Ghosh
  * Creates a random maze, then solves it by finding a path from the
  * upper left corner to the lower right corner. (After doing
  * one maze, it waits a while then starts over by creating a
